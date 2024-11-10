@@ -3,18 +3,23 @@ import { createCanvas } from "https://deno.land/x/canvas/mod.ts";
 import * as crypto from "node:crypto";
 import * as path from "jsr:@std/path";
 import { join } from "https://deno.land/std/path/mod.ts";
-import cors from "https://raw.githubusercontent.com/nandub/deno-cors/master/mod.ts";
+import cors from "npm:cors";
+import bodyParser from "npm:body-parser";
 
-
-
-
+const corsOptions = {
+  origin: "*",
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+};
 
 
 const app = express();
 
 // Middleware to parse JSON data
 app.use(express.json());
-app.use(cors());
+app.use(cors(corsOptions));
+app.use(bodyParser.json());
 
 
 // Root route
@@ -37,6 +42,7 @@ var filePath = "data.json"
 
 // New route: /new_image
 app.post("/new_image", async (req, res) => {
+	console.log("new get_img request")
 	const data = req.body;
 
 
