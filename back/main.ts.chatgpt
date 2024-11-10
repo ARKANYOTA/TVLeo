@@ -1,0 +1,140 @@
+import { serve } from "https://deno.land/std/http/server.ts";
+import * as crypto from "node:crypto";
+import * as path from "https://deno.land/std/path/mod.ts";
+import { join } from "https://deno.land/std/path/mod.ts";
+import { createCanvas } from "https://deno.land/x/canvas/mod.ts";
+
+const password = 'your_secure_password'; // Change this to your preferred password
+
+const filePath = "data.json";
+
+// Serve function that processes the incoming requests
+serve(async (req: Request) => {
+  const url = new URL(req.url); // Get the full URL of the request
+  const pathName = url.pathname; // Extract the path from the URL
+
+  console.log(`Received ${req.method} request for ${pathName}`);
+
+  // Handle the POST request to create a new image
+  if (req.method === "POST" && pathName === "/new_image") {
+    const data = await req.json();
+    return await createNewImage(data);
+  }
+
+  // Handle the POST request to get the images list
+  if (req.method === "POST" && pathName === "/get_images_list") {
+    const { password: providedPassword } = await req.json();
+    return await getImagesList(providedPassword);
+  }
+
+  // Handle the POST request to get image by ID
+  if (req.method === "POST" && pathName === "/get_image_by_id") {
+    const { password: providedPassword, imageId } = await req.json();
+    return await getImageById(providedPassword, imageId);
+  }
+
+  // If no route matches, return a 404 error
+  return new Response(JSON.stringify({ error: 'Route not found' }), {
+    status: 404,
+    headers: { "Content-Type": "application/json" }
+  });
+});
+
+// Create a new image from the provided data
+async function createNewImage(data: any) {
+  const canvas = createCanvas(55, 31);
+  const ctx = canvas.getContext("2d");
+
+  ctx.fillStyle = "white";
+  ctx.fillRect(0, 0, 55, 31);
+  
+  const firstimg = data["1"];
+  const chars = "abcdefghijklmnopqrstuvwxyz012345";
+  const colordict = {};
+
+  const color = ["#be4a2f", "#d77643", "#ead4aa", "#e4a672", "#b86f50", "#733e39", "#3e2731", "#a22633", "#e43b44", "#f77622", "#feae34", "#fee761", "#63c74d", "#3e8948", "#265c42", "#193c3e", "#124e89", "#0099db", "#2ce8f5", "#ffffff", "#c0cbdc", "#8b9bb4", "#5a6988", "#3a4466", "#262b44", "#181425", "#ff0044", "#68386c", "#b55088", "#f6757a", "#e8b796", "#c28569"];
+  for (let i = 0; i < chars.length; i++) {
+    colordict[chars[i]] = color[i];
+  }
+
+  Array.from(firstimg).forEach((elem, index) => {
+    if (!chars.includes(elem)) {
+      return;
+    }
+    ctx.fillStyle = colordict[elem];
+    const y = Math.floor(index / 55);
+    const x = index % 55;
+    ctx.fillRect(x, y, 1, 1);
+  });
+
+  const id = crypto.randomBytes(20).toString('hex');
+  await Deno.writeFile(id + ".png", canvas.toBuffer());
+
+  const d = JSON.parse(await Deno.readTextFile(filePath));
+  d[id] = { "name": data.name, "imgname": data.imgname, "imgpath": id + ".png", "approved": false, "locked": false };
+  await Deno.writeTextFile(filePath, JSON.stringify(d));
+
+  return new Response(JSON.stringify({ message: "Image created successfully", id }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" }
+  });
+}
+
+// Get the list of images after validating the password
+async function getImagesList(providedPassword: string) {
+  if (providedPassword !== password) {
+    return new Response(JSON.stringify({ error: 'Unauthorized. Incorrect password.' }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" }
+    });
+  }
+
+  const imagesList = JSON.parse(await Deno.readTextFile(filePath));
+  return new Response(JSON.stringify({ images: imagesList }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" }
+  });
+}
+
+// Get image by ID after validating the password
+async function getImageById(providedPassword: string, imageId: string) {
+  if (providedPassword !== password) {
+    return new Response(JSON.stringify({ error: 'Unauthorized. Incorrect password.' }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" }
+    });
+  }
+
+  const imagePath = join(Deno.cwd(), imageId);
+  try {
+    const imageBuffer = await Deno.readFile(imagePath);
+    const fileExtension = path.extname(imagePath).toLowerCase();
+    let contentType = 'application/octet-stream'; // Default MIME type for binary data
+
+    // Set Content-Type based on the file extension
+    if (fileExtension === '.png') {
+      contentType = 'image/png';
+    } else if (fileExtension === '.jpg' || fileExtension === '.jpeg') {
+      contentType = 'image/jpeg';
+    } else if (fileExtension === '.gif') {
+      contentType = 'image/gif';
+    }
+
+    return new Response(imageBuffer, {
+      status: 200,
+      headers: {
+        "Content-Type": contentType,
+      }
+    });
+  } catch (e) {
+    if (e instanceof Deno.errors.NotFound) {
+      console.error('File does not exist');
+      return new Response(JSON.stringify({ error: 'Image not found' }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+    throw e;
+  }
+}
+
