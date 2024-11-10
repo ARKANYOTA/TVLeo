@@ -197,7 +197,22 @@
                 output += index_Chars[imageData[j][i]];
             }
         }
-        formatedImageData.innerText = output;
+        console.log("fetch")
+        fetch("https://84.235.232.69:8000/new_image", {
+          method: "POST",
+        mode: 'cors',
+          body: JSON.stringify({
+            name: "Arkan Yota",
+            imgname: "My fucking Logo",
+            "1": output
+          }),
+          headers: {
+            "Content-type": "application/json; charset=UTF-8"
+          }
+        })
+  .then((response) => console.log(response.json()))
+  .then((json) => console.log(json));
+
     });
 
    for(let j = 0; j < 31; j++){

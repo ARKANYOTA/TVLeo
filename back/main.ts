@@ -3,6 +3,8 @@ import { createCanvas } from "https://deno.land/x/canvas/mod.ts";
 import * as crypto from "node:crypto";
 import * as path from "jsr:@std/path";
 import { join } from "https://deno.land/std/path/mod.ts";
+import cors from "https://raw.githubusercontent.com/nandub/deno-cors/master/mod.ts";
+
 
 
 
@@ -12,6 +14,8 @@ const app = express();
 
 // Middleware to parse JSON data
 app.use(express.json());
+app.use(cors());
+
 
 // Root route
 app.get("/", (req, res) => {
