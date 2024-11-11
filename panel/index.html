@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Hey look my new image, put it in your game</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet">
+</head>
+<body>
+    <div class="panel">
+        <span id="reload" class="material-icons" title="Every thing even the approved ones">refresh</span>
+        <span id="only-approved" class="material-icons" title="Only the one to approve">done_all</span>
+        <span>Do not forget to reload after each action</span>
+    </div>
+    <div id="elements">
+    </div>
+    <div id="image-conteineur">
+        <img id="image-preview" src="https://via.placeholder.com/55x31" alt="Image preview">
+    </div>
+
+</body>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    .a-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        border-bottom: 1px solid #ccc;
+    }
+    .item-left {
+        display: flex;
+        align-items: center;
+    }
+    .item-right {
+        display: flex;
+        align-items: center;
+    }
+    .item-right span {
+        margin-left: 10px;
+        cursor: pointer;
+    }
+    .item-right span:hover {
+        color: #ccc;
+    }
+    .item-right span:active {
+        color: #000;
+    }
+    #image-preview{
+      image-rendering: pixelated;
+        width: 100%;
+        height: auto;
+        display: block;
+        margin: 0 auto;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+</style>
+<script>
+    const aLine = document.querySelector('.a-line');
+    const itemRight = document.querySelector('.item-right');
+    const done = document.querySelector('.material-icons:nth-child(1)');
+    const del = document.querySelector('.material-icons:nth-child(2)');
+    const download = document.querySelector('.material-icons:nth-child(3)');
+
+    var password = "your_secure_password"; //prompt('password');
+    if (password !== 'your_secure_password') {
+        alert("Wrong password, reload the page and try again");
+    }
+
+    function getImagesList(notOnlyApproved = false) {
+        fetch("http://84.235.232.69:8000/get_images_list", {
+            method: "POST",
+            mode: 'cors',
+            body: JSON.stringify({
+                password: password,
+                notOnlyApproved: notOnlyApproved
+            }),
+            headers: {
+                "Content-type": "application/json; charset=UTF-8",
+                "Access-Control-Allow-Origin": "*"
+            }
+        })
+            .then(async (response) => {
+                if (response.status === 401) {
+                    alert("Wrong password, reload the page and try again");
+                }
+                data = await response.json();
+                console.log(data);
+                if (data.images === undefined) {
+                    alert("No images found");
+                }
+                for (var id in data.images) {
+                    var value = data.images[id];
+                    const aLine = document.createElement('div');
+                    aLine.classList.add('a-line');
+                    const itemLeft = document.createElement('div');
+                    itemLeft.classList.add('item-left');
+                    const p = document.createElement('p');
+                    p.textContent = value.name + ' - ' + value.imgname;
+                    p.title = id;
+                    itemLeft.appendChild(p);
+                    const itemRight = document.createElement('div');
+                    itemRight.classList.add('item-right');
+
+                    const is_locked = value.locked;
+                    if (is_locked === true) {
+                        const lock = document.createElement('span');
+                        lock.classList.add('material-icons');
+                        lock.textContent = 'lock';
+                        lock.onclick = () => {
+                            alert("This image is locked, you can not do anything with it");
+                        };
+                        itemRight.appendChild(lock);
+                    } else {
+                        const is_approved = value.approved;
+                        if (is_approved !== true) {
+                            const done = document.createElement('span');
+                            done.classList.add('material-icons');
+                            done.textContent = 'done';
+                            done.onclick = ((ev) => {
+                                const id = ev.target.parentElement.parentElement.querySelector('p').title;
+
+                                fetch("http://84.235.232.69:8000/approve_image", {
+                                    method: "POST",
+                                    mode: 'cors',
+                                    body: JSON.stringify({
+                                        password: password,
+                                        imageId: id
+                                    }),
+                                    headers: {
+                                        "Content-type": "application/json; charset=UTF-8",
+                                        "Access-Control-Allow-Origin": "*"
+                                    }
+                                })
+                                    .then(async (response) => {
+                                        if (response.status === 401) {
+                                            alert("Wrong password, reload the page and try again");
+                                        }
+                                        data = await response.json();
+                                        console.log(data);
+                                        if (data.approved === true) {
+                                            alert("Image approved successfully, do not forget to reload (with button) (and maybe wait little bit)");
+                                        }
+                                        // remove the done button
+                                        done.remove();
+                                    })
+                                    .then((json) => console.log(json));
+                            });
+
+                            itemRight.appendChild(done);
+                        }
+                        const del = document.createElement('span');
+                        del.classList.add('material-icons');
+                        del.textContent = 'delete';
+                        del.onclick = ((ev) => {
+                            const id = ev.target.parentElement.parentElement.querySelector('p').title;
+
+                            fetch("http://84.235.232.69:8000/delete_image", {
+                                method: "POST",
+                                mode: 'cors',
+                                body: JSON.stringify({
+                                    password: password,
+                                    imageId: id
+                                }),
+                                headers: {
+                                    "Content-type": "application/json; charset=UTF-8",
+                                    "Access-Control-Allow-Origin": "*"
+                                }
+                            })
+                                .then(async (response) => {
+                                    if (response.status === 401) {
+                                        alert("Wrong password, reload the page and try again");
+                                    }
+                                    data = await response.json();
+                                    console.log(data);
+                                    if (data.deleted === true) {
+                                        alert("Image deleted successfully, do not forget to reload (with button) (and maybe wait little bit)");
+                                    }
+                                    // remove all
+                                    ev.target.parentElement.parentElement.remove();
+                                })
+                                .then((json) => console.log(json));
+                        });
+                        const download = document.createElement('span');
+                        download.classList.add('material-icons');
+                        download.textContent = 'download';
+                        download.onclick = ((ev) => {
+                            const id = ev.target.parentElement.parentElement.querySelector('p').title;
+
+                            fetch("http://84.235.232.69:8000/get_image_by_id", {
+                                method: "POST",
+                                mode: 'cors',
+                                body: JSON.stringify({
+                                    password: password,
+                                    imageId: id
+                                }),
+                                headers: {
+                                    "Content-type": "application/json; charset=UTF-8",
+                                    "Access-Control-Allow-Origin": "*"
+                                }
+                            })
+                                .then(async (response) => {
+                                    if (response.status === 401) {
+                                        alert("Wrong password, reload the page and try again");
+                                    }
+                                    data = await response.blob();
+                                    console.log(data);
+                                    const imageUrl = URL.createObjectURL(data);
+                                    const a = document.createElement('a');
+                                    a.href = imageUrl;
+                                    a.download = value.imgname;
+                                    a.click();
+                                })
+                                .then((json) => console.log(json));
+                        });
+                        itemRight.appendChild(del);
+                        itemRight.appendChild(download);
+                    }
+
+                    const watch = document.createElement('span');
+                    watch.classList.add('material-icons');
+                    watch.textContent = 'visibility';
+                    watch.onclick = ((ev) => {
+                        const id = ev.target.parentElement.parentElement.querySelector('p').title;
+
+                        fetch("http://84.235.232.69:8000/get_image_by_id", {
+                            method: "POST",
+                            mode: 'cors',
+                            body: JSON.stringify({
+                                password: password,
+                                imageId: id
+                            }),
+                            headers: {
+                                "Content-type": "application/json; charset=UTF-8",
+                                "Access-Control-Allow-Origin": "*"
+                            }
+                        })
+                            .then(async (response) => {
+                                if (response.status === 401) {
+                                    alert("Wrong password, reload the page and try again");
+                                }
+                                data = await response.blob();
+                                console.log(data);
+                                const img = document.getElementById('image-preview');
+                                const imageUrl = URL.createObjectURL(data);
+                                img.src = imageUrl;
+                                document.body.appendChild(img);
+                            })
+                            .then((json) => console.log(json));
+                    });
+                    itemRight.appendChild(watch);
+                    aLine.appendChild(itemLeft);
+                    aLine.appendChild(itemRight);
+                    document.getElementById('elements').appendChild(aLine);
+                }
+
+                /*
+
+    done.addEventListener('click', () => {
+        aLine.style.backgroundColor = '#f0f0f0';
+    });
+
+    del.addEventListener('click', () => {
+        aLine.style.display = 'none';
+    });
+
+    download.addEventListener('click', () => {
+        alert('Downloaded');
+    });
+
+                 */
+                ;
+            })
+            .then((json) => console.log(json));
+    }
+    getImagesList();
+
+    function clearImagesList() {
+        const aLines = document.querySelectorAll('.a-line');
+        aLines.forEach((aLine) => {
+            aLine.remove();
+        });
+    }
+
+    const reload = document.querySelector('#reload');
+    reload.addEventListener('click', () => {
+        clearImagesList();
+        getImagesList(false);
+    });
+
+    const notOnlyApproved = document.querySelector('#only-approved');
+    notOnlyApproved.addEventListener('click', () => {
+        clearImagesList();
+        getImagesList(true);
+    });
+</script>
+</html>

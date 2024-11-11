@@ -11,10 +11,10 @@
 <body>
     <div class="bar" id="top-bar">
         <div id="top-bar-left">
-            <div class="button" id="upload-btn-1" onclick="upload()"><span class="material-icons">upload</span></div>
-            <button id="btn-2">BTN 2</button>
-            <button id="btn-3">BTN 3</button>
-            <button id="btn-4">Show formatedx image data</button>
+            <div class="button" id="upload-btn"><span class="material-icons">upload</span></div>
+            <input type="text" id="name" name="name" placeholder="Your name: (For credits)"/>
+            <input type="text" id="imgname" name="name" placeholder="Image Name: (For the database)"/>
+            <div class="version"></div>
         </div>
         <div id="top-bar-right">
             <div class="button" id="pencil-btn"><span class="material-icons">edit</span></div>
@@ -87,6 +87,17 @@
     }
     #top-bar-left{
         left: 0;
+    }
+    label {
+        color: white;
+        padding: 10px;
+    }
+    input {
+        padding: 10px;
+        margin: 10px;
+        box-sizing: border-box;
+
+
     }
     #top-bar-right{
         display: flex;
@@ -169,10 +180,12 @@
    var index_Chars = [ "0", "1", "2", "3", "4", "5", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"]
 
     const grid = document.getElementById('grid');
-    const btn4 = document.getElementById('btn-4');
+    const uploadButton = document.getElementById('upload-btn');
     const formatedImageData = document.getElementById('formated-image-data');
     const pencilBtn = document.getElementById('pencil-btn');
     const colorList = document.getElementById('color-list');
+    const nameInput = document.getElementById('name');
+    const imgnameInput = document.getElementById('imgname');
     var isMouseDown = false;
     var imageData = Array(31).fill(0).map(() => Array(55).fill(0));
     var brushColor = 1;  // Index
@@ -190,20 +203,31 @@
         pencilBtn.classList.toggle('active-button');
         pencilBtn.nextElementSibling.setAttribute('active-button', pencilBtn.classList.contains('active-button'));
     }
-   btn4.addEventListener('click', () => {
+   uploadButton.addEventListener('click', () => {
+       if (nameInput.value === "" || imgnameInput.value === "") {
+           if (nameInput.value === "") {
+               nameInput.style.border = "1px solid red";
+           }
+              if (imgnameInput.value === "") {
+                imgnameInput.style.border = "1px solid red";
+              }
+           alert("Please fill in the name and image name fields");
+           return;
+       }
+
         var output = "";
         for (let j = 0; j < 31; j++) {
             for (let i = 0; i < 55; i++) {
                 output += index_Chars[imageData[j][i]];
             }
         }
-        console.log("fetch")
+        // fetch("http://84.235.232.69:8000/new_image",
         fetch("http://84.235.232.69:8000/new_image", {
           method: "POST",
-        mode: 'cors',
+          mode: 'cors',
           body: JSON.stringify({
-            name: "Arkan Yota",
-            imgname: "My fucking Logo",
+            name: nameInput.value,
+            imgname: imgnameInput.value,
             "1": output
           }),
           headers: {
@@ -211,7 +235,7 @@
               "Access-Control-Allow-Origin": "*"
           }
         })
-  .then((response) => console.log(response.json()))
+  .then((response) => alert("Image uploaded successfully, no need to click again"))
   .then((json) => console.log(json));
 
     });
@@ -220,7 +244,7 @@
         for(let i = 0; i < 55; i++){
             const gridItem = document.createElement('div');
             gridItem.classList.add('grid-idem');
-            gridItem.style.backgroundColor = "red";
+            gridItem.style.backgroundColor = index_Colors[imageData[j][i]];
             gridItem.style.setProperty("--x", i);
             gridItem.style.setProperty("--y", j);
             gridItem.onmouseover = () => {
@@ -246,7 +270,7 @@
         colorList.appendChild(color);
     }
    async function upload() {
-       fetch("http://localhost:8000/", {
+       fetch("http://84.235.232.69:8000/", {
            method: "POST",
            headers: {
                "Content-type": "application/json; charset=UTF-8",

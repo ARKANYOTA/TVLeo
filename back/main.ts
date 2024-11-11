@@ -36,8 +36,6 @@ for (let i = 0; i < chars.length; i++) {
   colordict[chars[i]] = color[i];
 }
 
-console.log(colordict);
-
 var filePath = "data.json"
 
 // New route: /new_image
@@ -92,7 +90,7 @@ const password = 'your_secure_password'; // Change this to your preferred passwo
 
 // POST route to get the images list
 app.post('/get_images_list', async (req, res) => {
-  const { password: providedPassword } = req.body;
+  const { password: providedPassword, notOnlyApproved: notOnlyApproved } = req.body;
 
   // Check if the provided password is correct
   if (providedPassword !== password) {
@@ -101,6 +99,17 @@ app.post('/get_images_list', async (req, res) => {
 
   // If password is correct, proceed with returning the images list
   const imagesList = await JSON.parse(await Deno.readTextFile(filePath));
+  if (notOnlyApproved) {
+		const approvedImagesList = {};
+		Object.keys(imagesList).forEach(key => {
+			if (imagesList[key].approved) {
+				approvedImagesList[key] = imagesList[key];
+			}
+		});
+
+		console.log(approvedImagesList);
+	  return res.json({ images: approvedImagesList });
+  }
 
   res.json({ images: imagesList });
 });
@@ -144,11 +153,10 @@ app.post('/get_image_by_id', async (req, res) => {
 		return res.status(401).json({ error: 'Unauthorized. Incorrect password.' });
 	}
 
-	const imagePath = join(Deno.cwd(), imageId);
+	const imagePath = join(Deno.cwd(), imageId+".png");
+	console.log(imagePath);
 
 	try {
-		const imageBuffer = await Deno.readFile("image.png");
-
 		return res.status(200).set("Content-Type", 'image/png').sendFile(imagePath);
 	} catch(e) {
 		console.log(e)
@@ -157,9 +165,46 @@ app.post('/get_image_by_id', async (req, res) => {
 	}
 });
 
+app.post('/delete_image', async (req, res) => {
+	const { password: providedPassword, imageId } = req.body;
+
+	if (providedPassword !== password) {
+		return res.status(401).json({ error: 'Unauthorized. Incorrect password.' });
+	}
+
+	const imagePath = join(Deno.cwd(), imageId+".png");
+	console.log(imagePath);
+
+	try {
+		await Deno.remove(imagePath);
+		const imageData = await JSON.parse(await Deno.readTextFile(filePath));
+		delete imageData[imageId];
+		await Deno.writeTextFile(filePath, JSON.stringify(imageData));
+		return res.status(200).json({ message: 'Image deleted successfully' });
+	} catch(e) {
+		console.log(e)
+		console.error('file does not exists');
+		return res.status(401).json({ error: 'Not found image' });
+	}
+});
+
+app.post('/approve_image', async (req, res) => {
+	const { password: providedPassword, imageId } = req.body;
+
+	if (providedPassword !== password) {
+		return res.status(401).json({ error: 'Unauthorized. Incorrect password.' });
+	}
+
+	const imageData = await JSON.parse(await Deno.readTextFile(filePath));
+	imageData[imageId].approved = true;
+	await Deno.writeTextFile(filePath, JSON.stringify(imageData));
+
+	return res.status(200).json({ message: 'Image approved successfully' });
+});
+
 
 const PORT = 8000;
 app.listen(PORT, () => {
-	console.log(`Server running on http://localhost:${PORT}`);
+	console.log(`Server running on http://84.235.232.69:${PORT}`);
 });
 
