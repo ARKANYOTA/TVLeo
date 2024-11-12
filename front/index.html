@@ -17,6 +17,7 @@
             <input type="text" id="name" name="name" placeholder="Your name: (For credits)"/>
             <input type="text" id="imgname" name="name" placeholder="Image Name: (For the database)"/>
             <div class="version"></div>
+		<div class=button id="test" onclick="upload()"><span class="material-icons">bug_report</span></div>
         </div>
         <div id="top-bar-right">
             <div class="button" id="pencil-btn"><span class="material-icons">edit</span></div>
@@ -223,8 +224,8 @@
                 output += index_Chars[imageData[j][i]];
             }
         }
-        // fetch("http://84.235.232.69:8000/new_image",
-        fetch("http://84.235.232.69:8000/new_image", {
+        // fetch("http://localhost:8000/new_image",
+        fetch("http://localhost:8000/new_image", {
           method: "POST",
           mode: 'cors',
           body: JSON.stringify({
@@ -272,7 +273,7 @@
         colorList.appendChild(color);
     }
    async function upload() {
-       fetch("http://84.235.232.69:8000/", {
+       fetch("http://localhost:8000/", {
            method: "POST",
            headers: {
                "Content-type": "application/json; charset=UTF-8",

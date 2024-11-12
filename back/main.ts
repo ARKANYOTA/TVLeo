@@ -205,6 +205,6 @@ app.post('/approve_image', async (req, res) => {
 
 const PORT = 8000;
 app.listen(PORT, () => {
-	console.log(`Server running on http://84.235.232.69:${PORT}`);
+	console.log(`Server running on http://localhost:${PORT}`);
 });
 

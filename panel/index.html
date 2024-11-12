@@ -79,7 +79,7 @@
     }
 
     function getImagesList(notOnlyApproved = false) {
-        fetch("http://84.235.232.69:8000/get_images_list", {
+        fetch("http://localhost:8000/get_images_list", {
             method: "POST",
             mode: 'cors',
             body: JSON.stringify({
@@ -131,7 +131,7 @@
                             done.onclick = ((ev) => {
                                 const id = ev.target.parentElement.parentElement.querySelector('p').title;
 
-                                fetch("http://84.235.232.69:8000/approve_image", {
+                                fetch("http://localhost:8000/approve_image", {
                                     method: "POST",
                                     mode: 'cors',
                                     body: JSON.stringify({
@@ -166,7 +166,7 @@
                         del.onclick = ((ev) => {
                             const id = ev.target.parentElement.parentElement.querySelector('p').title;
 
-                            fetch("http://84.235.232.69:8000/delete_image", {
+                            fetch("http://localhost:8000/delete_image", {
                                 method: "POST",
                                 mode: 'cors',
                                 body: JSON.stringify({
@@ -198,7 +198,7 @@
                         download.onclick = ((ev) => {
                             const id = ev.target.parentElement.parentElement.querySelector('p').title;
 
-                            fetch("http://84.235.232.69:8000/get_image_by_id", {
+                            fetch("http://localhost:8000/get_image_by_id", {
                                 method: "POST",
                                 mode: 'cors',
                                 body: JSON.stringify({
@@ -234,7 +234,7 @@
                     watch.onclick = ((ev) => {
                         const id = ev.target.parentElement.parentElement.querySelector('p').title;
 
-                        fetch("http://84.235.232.69:8000/get_image_by_id", {
+                        fetch("http://localhost:8000/get_image_by_id", {
                             method: "POST",
                             mode: 'cors',
                             body: JSON.stringify({
