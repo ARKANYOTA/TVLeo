@@ -225,7 +225,7 @@
             }
         }
         // fetch("http://localhost:8000/new_image",
-        fetch("http://localhost:8000/new_image", {
+        fetch("https://api.bugscraper.net/new_image", {
           method: "POST",
           mode: 'cors',
           body: JSON.stringify({
@@ -273,7 +273,7 @@
         colorList.appendChild(color);
     }
    async function upload() {
-       fetch("http://localhost:8000/", {
+       fetch("https://api.bugscraper.net/", {
            method: "POST",
            headers: {
                "Content-type": "application/json; charset=UTF-8",
